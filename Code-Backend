@@ -1,0 +1,196 @@
+#include "GyverStepper.h"//рабочий вар.
+GStepper< STEPPER2WIRE> stepper(3200, 51, 49, 47); // драйвер step-dir + пин enable
+GStepper< STEPPER2WIRE> stepper2(3200, 43, 41, 39); // драйвер step-dir + пин enable
+GStepper< STEPPER2WIRE> stepper3(3200, 35, 33, 31); // драйвер step-dir + пин enable
+
+int x;
+int menuP;
+int menuT;
+int takeD;
+float resultR;
+int wheel;
+float stepp;
+float stepconst;
+float stepp90;
+float stepp180;
+float stepp45;
+int valStep;
+int degree;
+float steppp;
+
+
+void setup() {
+  
+  Serial.begin(9600);
+
+  stepper2.setSpeed(500);    
+  stepper2.setRunMode(FOLLOW_POS);
+  stepper2.setMaxSpeed(500);
+  stepper2.autoPower(false);
+  stepper2.enable();
+  
+  stepper.setSpeed(500);   
+  stepper.setRunMode(FOLLOW_POS);
+  stepper.setMaxSpeed(500);
+  stepper.autoPower(false);
+  stepper.enable();
+
+  stepper3.setSpeed(1500);   
+  stepper3.setRunMode(FOLLOW_POS);
+  stepper3.setMaxSpeed(1500);
+  stepper3.autoPower(true);
+  stepper3.enable();
+
+  stepper.setTarget(0,RELATIVE);
+  stepper2.setTarget(0,RELATIVE);
+  stepper3.setTarget(0,RELATIVE);
+  while (stepper.tick() && stepper2.tick() && stepper3.tick());
+
+  stepconst = 9,1;
+  stepp90 = 0;
+  stepp180 = 0;
+  stepp45 = 0;
+
+  x = 0;
+  menuP = 0;
+  menuT = 0;
+  takeD = 0;
+  resultR = 0;
+  wheel = 50;
+  stepp = 0;
+  stepp90 = 0;
+  stepp180 = 0;
+  stepp45 = 0;
+  valStep = 0;
+  degree = 0;
+  stepp = 0;
+  
+  pinMode(13, OUTPUT);
+  
+}
+
+void loop() {
+  
+       if(x <= 0){
+       digitalWrite(13,LOW);
+       x = Serial.read(); //Сначала читаем X после выхода из менюхи присваеваем ему 0 и снова его читаем
+       }
+
+       
+
+
+
+//Меню Пластина//Меню Пластина//Меню Пластина//Меню Пластина//Меню Пластина
+
+   if (x == 1) { 
+
+   //***Нужно выставить ШВП на уровнь 100мм от колеса до колеса setTarget
+   //***ABSOLUTE
+   menuP = Serial.read();
+   digitalWrite(13,HIGH);
+   
+        if (menuP == 1) {
+          //Движение колес вперед
+          digitalWrite(13,HIGH);
+          stepper.setTarget(-1000,RELATIVE);
+          stepper2.setTarget(1000,RELATIVE);
+          while (stepper.tick() && stepper2.tick());
+        }
+
+        if (menuP == 2) {
+          //Движение колес назад
+          digitalWrite(13,LOW);
+          stepper.setTarget(1000,RELATIVE);
+          stepper2.setTarget(-1000,RELATIVE);
+          while (stepper.tick() && stepper2.tick());
+        }
+
+        if (menuP == 3) {
+          //Движение ШВП на +20 к ABSOLUTE
+          stepper3.setTarget(6200,RELATIVE);
+          while (stepper3.tick());
+        }
+
+        if (menuP == 4) {
+          //Движение ШВП на -20 к ABSOLUTE
+          stepper3.setTarget(-6200,RELATIVE);
+          while (stepper3.tick());
+        }
+
+        if (menuP == 5) { //Выход из меню Пластина
+          digitalWrite(13,LOW);
+          x = 0;
+        }
+       
+  }
+
+//Меню Труба//Меню Труба//Меню Труба//Меню Труба//Меню Труба//Меню Труба
+
+   if (x == 2) { 
+
+   //***Выставляем ШВП на уровень взятый от диаметра setTarget 
+   //***(level,ABSOLUTE)
+   menuT = Serial.read();
+   digitalWrite(13,HIGH);
+
+        if (menuT == 1) {
+          //Движение колес на 180 градусов от диаметра
+          stepper.setTarget(stepp180,RELATIVE);
+          stepper2.setTarget(-(stepp180),RELATIVE);
+          while (stepper.tick() && stepper2.tick());
+        }
+
+        if (menuT == 2) {
+          //Движение колес на 90 градусов от диаметра 
+          stepper.setTarget(stepp90,RELATIVE);
+          stepper2.setTarget(-(stepp90),RELATIVE);
+          while (stepper.tick() && stepper2.tick());
+        }
+
+        if (menuT == 3) {
+          //Движение ШВП на +20 к ABSOLUTE от диаметра
+          stepper3.setTarget(6200,RELATIVE);
+          while (stepper3.tick());
+        }
+
+        if (menuT == 4) {
+          //Движение ШВП на -20 к ABSOLUTE от диаметра
+          stepper3.setTarget(-6200,RELATIVE);
+          while (stepper3.tick());
+        }
+   
+        if (menuT == 5) { //Выход из меню Труба
+          digitalWrite(13,LOW);
+          x = 0;
+        }
+
+        if (menuT == 6) {
+          //Движение колес на 45 градусов от диаметра
+          stepper.setTarget(stepp45,RELATIVE);
+          stepper2.setTarget(-(stepp45),RELATIVE);
+          while (stepper.tick() && stepper2.tick());
+        }
+
+        if (menuT == 7) {
+          //Движение колес на 45 градусов от диаметра
+          stepper.setTarget(steppp,RELATIVE);
+          stepper2.setTarget(-(steppp),RELATIVE);
+          while (stepper.tick() && stepper2.tick());
+        }
+
+        if (menuT >= 8 && menuT <=500) { 
+          //Принимаем введеный диаметр
+          takeD = menuT;
+          resultR = takeD/2;
+          stepp = stepconst * (resultR/wheel);
+          stepp180 = stepp*180;
+          stepp90 = stepp*90;
+          stepp45 = stepp*45;
+          valStep = lrint((2*3.14*resultR)/100);
+          degree = lrint(360/valStep);
+          steppp = degree*stepp;
+        }
+        
+  }
+
+}
